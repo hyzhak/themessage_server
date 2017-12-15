@@ -99,3 +99,11 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+#IDE
+.idea/
+
+# configs
+config/*-dev.env
+config/*-prod.env
+docker-compose-dev.yml

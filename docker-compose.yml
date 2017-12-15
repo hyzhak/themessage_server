@@ -1,0 +1,17 @@
+version: '2'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python ./themessage_server/main.py
+    volumes:
+      - ./:/usr/src/app:rw
+    env_file:
+      - ./config/medium.env
+      - ./config/python.env
+      - ./config/server.env
+    ports:
+      - "8765:8765"
+#    restart: always
