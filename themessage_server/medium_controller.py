@@ -1,7 +1,7 @@
 from flask import abort, Blueprint, jsonify, request, Response
 import logging
 import medium
-from themessage_server import medium_integration
+from themessage_server import medium_integration, storage
 
 logger = logging.getLogger(__name__)
 
@@ -40,22 +40,26 @@ def medium_callback():
         return Response('ok', status=200)
 
     code = request.args.get('code')
+    state = request.args.get('state')
 
     logger.info(f'get code {code}')
 
+    storage.store_code(state, code)
+
     # we could ever this operation move to the client
     # and return code right a way
-    try:
-        token = medium_integration.authorize(request.args.get('code'))
-    except medium.MediumError as err:
-        logger.error(f'Can not authorize user by code {code}', exc_info=True, extra={
-            'data': {
-                'request': {
-                    'args': request.args,
-                },
-            },
-        })
-        abort(400)
+    #
+    # try:
+    #     token = medium_integration.authorize(request.args.get('code'))
+    # except medium.MediumError as err:
+    #     logger.error(f'Can not authorize user by code {code}', exc_info=True, extra={
+    #         'data': {
+    #             'request': {
+    #                 'args': request.args,
+    #             },
+    #         },
+    #     })
+    #     abort(400)
 
     # user = medium_integration.get_user()
     # logger.info(f'user @{user.get("username")} is authorized')
