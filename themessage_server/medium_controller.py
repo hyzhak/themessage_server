@@ -32,31 +32,43 @@ def debug():
 # https://example.com/callback/medium?error=access_denied
 @medium_blueprint.route('/callback')
 def medium_callback():
+    def log_error(msg, request_payload=None, err=None, code=400):
+        request_payload = request_payload or {}
+        logging_data = {
+            'request': {
+                'args': request.args,
+            },
+        }
+
+        if request_payload:
+            logging_data['request']['payload'] = request_payload
+
+        if err:
+            logging_data['error'] = err
+
+        logger.error(msg, extra={
+            'stack': True,
+            'data': logging_data,
+        })
+
+        response_data = {
+            'status': 'error',
+            'message': msg,
+        }
+        if err:
+            response_data['error'] = str(err)
+        if request_payload:
+            response_data['payload'] = request_payload
+        return jsonify(response_data), code
+
     if not request or not request.args:
-        logger.info('does not have args')
-        abort(400)
+        return log_error('does not have args')
 
     if 'error' in request.args:
-        logger.error('get medium callback error', extra={
-            'stack': True,
-            'data': {
-                'request': {
-                    'args': request.args,
-                },
-            },
-        })
-        return Response('ok', status=400)
+        return log_error('get medium callback error')
 
     if 'state' not in request.args or 'code' not in request.args:
-        logger.error('get medium callback without state or code', extra={
-            'stack': True,
-            'data': {
-                'request': {
-                    'args': request.args,
-                },
-            },
-        })
-        return Response('ok', status=400)
+        return log_error('get medium callback without state or code')
 
     code = request.args.get('code')
     state = request.args.get('state')
@@ -66,22 +78,12 @@ def medium_callback():
     try:
         payload = jwt.decode(state, os.environ.get('JWT_SECRET'), algorithms=['HS256'])
     except jwt.DecodeError as err:
-        msg = 'get callback request with broken state argument'
-        logger.error(msg, extra={
-            'stack': True,
-        })
-        return jsonify({
-            'status': 'error',
-            'error': msg,
-            'details': str(err),
-            'payload': {
-                'code': code,
-                'state': state,
-            },
-        }), 400
-
-    logger.info('payload')
-    logger.info(payload)
+        return log_error('get callback request with broken state argument',
+                         err=err,
+                         request_payload={
+                             'code': code,
+                             'state': state,
+                         })
 
     user_id = payload['user_id']
 
