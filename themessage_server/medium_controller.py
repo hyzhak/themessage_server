@@ -1,11 +1,28 @@
-from flask import abort, Blueprint, jsonify, request, Response
 import logging
-import medium
-from themessage_server import medium_integration, storage
 
 logger = logging.getLogger(__name__)
 
+import gevent
+from gevent.queue import Queue
+
+from flask import abort, Blueprint, jsonify, request, request_finished, Response
+from themessage_server import storage
+
 medium_blueprint = Blueprint('medium', __name__)
+
+code_subscriptions = []
+
+__app = None
+
+
+def set_app(_app):
+    global __app
+    __app = _app
+
+
+@medium_blueprint.route('/debug')
+def debug():
+    return f'Currently {len(code_subscriptions)} subscriptions'
 
 
 # should be able to handle:
@@ -46,6 +63,12 @@ def medium_callback():
 
     storage.store_code(state, code)
 
+    def notify():
+        for sub in code_subscriptions[:]:
+            sub.put({'code': code, 'state': state})
+
+    gevent.spawn(notify)
+
     # we could ever this operation move to the client
     # and return code right a way
     #
@@ -81,5 +104,67 @@ def medium_callback():
 
     return jsonify({
         'status': 'ok',
-        'token': token,
+        'code': code,
     })
+
+
+@medium_blueprint.route('/code/<user_id>')
+def code_stream(user_id):
+    code_stream_endpoint_name = f'medium.{code_stream.__name__}'
+
+    logger.info('client start listen its code', extra={
+        'user': {
+            'id': user_id,
+        },
+    })
+
+    def gen():
+        q = Queue()
+
+        def on_disconnect(*args, **kwargs):
+            if request.endpoint == code_stream_endpoint_name:
+                logger.info('client disconnects from a stream without getting auth code', extra={
+                    'user': {
+                        'id': user_id,
+                    },
+                })
+                # send None which will be consider as the end
+                q.put(None)
+
+        # start stream
+
+        code_subscriptions.append(q)
+        request_finished.connect(on_disconnect, __app)
+
+        # stream
+
+        try:
+            while True:
+                result = q.get()
+
+                if result and result['state'] == user_id:
+                    yield result['code']
+                    logger.info('client receive auth code', extra={
+                        'user': {
+                            'id': user_id,
+                        },
+                    })
+                    break
+
+                if result is None:
+                    break
+        except GeneratorExit:
+            logger.warning('have problem to send auth code to a client', extra={
+                'user': {
+                    'id': user_id,
+                },
+            })
+
+        # stop stream
+
+        logger.info('before stop stream')
+
+        code_subscriptions.remove(q)
+        request_finished.disconnect(on_disconnect, __app)
+
+    return Response(gen(), mimetype="text/event-stream")
