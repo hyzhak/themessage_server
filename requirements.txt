@@ -2,3 +2,4 @@ blinker==1.4
 flask==0.12.2
 gevent==1.2.2
 medium==0.3.0
+PyJWT==1.5.3

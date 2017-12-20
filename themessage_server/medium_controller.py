@@ -6,6 +6,8 @@ import gevent
 from gevent.queue import Queue
 
 from flask import abort, Blueprint, jsonify, request, request_finished, Response
+import jwt
+import os
 from themessage_server import storage
 
 medium_blueprint = Blueprint('medium', __name__)
@@ -43,7 +45,7 @@ def medium_callback():
                 },
             },
         })
-        return Response('ok', status=200)
+        return Response('ok', status=400)
 
     if 'state' not in request.args or 'code' not in request.args:
         logger.error('get medium callback without state or code', extra={
@@ -54,18 +56,40 @@ def medium_callback():
                 },
             },
         })
-        return Response('ok', status=200)
+        return Response('ok', status=400)
 
     code = request.args.get('code')
     state = request.args.get('state')
 
     logger.info(f'get code {code}')
 
+    try:
+        payload = jwt.decode(state, os.environ.get('JWT_SECRET'), algorithms=['HS256'])
+    except jwt.DecodeError as err:
+        msg = 'get callback request with broken state argument'
+        logger.error(msg, extra={
+            'stack': True,
+        })
+        return jsonify({
+            'status': 'error',
+            'error': msg,
+            'details': str(err),
+            'payload': {
+                'code': code,
+                'state': state,
+            },
+        }), 400
+
+    logger.info('payload')
+    logger.info(payload)
+
+    user_id = payload['user_id']
+
     storage.store_code(state, code)
 
     def notify():
         for sub in code_subscriptions[:]:
-            sub.put({'code': code, 'state': state})
+            sub.put({'code': code, 'state': state, 'user_id': user_id})
 
     gevent.spawn(notify)
 
@@ -142,7 +166,7 @@ def code_stream(user_id):
             while True:
                 result = q.get()
 
-                if result and result['state'] == user_id:
+                if result and result['user_id'] == user_id:
                     yield result['code']
                     logger.info('client receive auth code', extra={
                         'user': {
