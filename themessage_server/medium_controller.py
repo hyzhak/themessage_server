@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 import gevent
 from gevent.queue import Queue
 
-from flask import abort, Blueprint, jsonify, request, request_finished, Response
+from flask import Blueprint, jsonify, request, request_finished, Response
 import jwt
 import os
 from themessage_server import storage
@@ -88,6 +88,8 @@ def medium_callback():
     user_id = payload['user_id']
 
     storage.store_code(state, code)
+
+    logger.info(f'get code {code} of user {user_id}')
 
     def notify():
         for sub in code_subscriptions[:]:
