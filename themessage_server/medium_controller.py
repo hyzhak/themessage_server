@@ -6,6 +6,9 @@ import gevent
 from gevent.queue import Queue
 
 from flask import Blueprint, jsonify, request, request_finished, Response
+# TODO:
+# maybe will require fix https://pyjwt.readthedocs.io/en/latest/installation.html#legacy-dependencies
+# because google app engine doesn't allow to compile C
 import jwt
 import os
 from themessage_server import storage
