@@ -2,23 +2,22 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from webargs import fields
-from webargs.aiohttpparser import use_args
-
 # TODO:
-# maybe will require fix https://pyjwt.readthedocs.io/en/latest/installation.html#legacy-dependencies
+# may require fix https://pyjwt.readthedocs.io/en/latest/installation.html#legacy-dependencies
 # because google app engine doesn't allow to compile C
 import jwt
 import os
 from themessage_server import blueprint, storage
 
-# medium_blueprint = Blueprint('medium', __name__)
+from webargs import fields
+from webargs.aiohttpparser import use_args
+
 medium_blueprint = blueprint.Blueprint('medium', __name__)
 
 code_subscriptions = []
 
 
-@medium_blueprint.route('/debug')
+@medium_blueprint.get('/debug')
 def debug(request):
     return f'Currently {len(code_subscriptions)} subscriptions'
 
@@ -26,7 +25,7 @@ def debug(request):
 # should be able to handle:
 # https://example.com/callback/medium?state={{state}}&code={{code}}
 # https://example.com/callback/medium?error=access_denied
-@medium_blueprint.route('/callback')
+@medium_blueprint.get('/callback')
 @use_args({
     'code': fields.Str(),
     'error': fields.Str(),
@@ -137,7 +136,7 @@ async def medium_callback(request, args):
     }
 
 
-@medium_blueprint.route('/code/<user_id>')
+@medium_blueprint.get('/code/<user_id>')
 def code_stream(user_id):
     code_stream_endpoint_name = f'medium.{code_stream.__name__}'
 
