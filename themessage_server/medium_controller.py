@@ -2,10 +2,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# import gevent
-# from gevent.queue import Queue
+from webargs import fields
+from webargs.aiohttpparser import use_args
 
-# from flask import Blueprint, jsonify, request, request_finished, Response
 # TODO:
 # maybe will require fix https://pyjwt.readthedocs.io/en/latest/installation.html#legacy-dependencies
 # because google app engine doesn't allow to compile C
@@ -28,12 +27,17 @@ def debug(request):
 # https://example.com/callback/medium?state={{state}}&code={{code}}
 # https://example.com/callback/medium?error=access_denied
 @medium_blueprint.route('/callback')
-async def medium_callback(request):
+@use_args({
+    'code': fields.Str(),
+    'error': fields.Str(),
+    'state': fields.Str(),
+})
+async def medium_callback(request, args):
     def log_error(msg, request_payload=None, err=None, code=400):
         request_payload = request_payload or {}
         logging_data = {
             'request': {
-                'args': request.args,
+                'args': args,
             },
         }
 
@@ -58,17 +62,17 @@ async def medium_callback(request):
             response_data['payload'] = request_payload
         return response_data, code
 
-    if not request or 'args' not in request:
+    if not args:
         return log_error('does not have args')
 
-    if 'error' in request.args:
+    if 'error' in args:
         return log_error('get medium callback error')
 
-    if 'state' not in request.args or 'code' not in request.args:
+    if 'state' not in args or 'code' not in args:
         return log_error('get medium callback without state or code')
 
-    code = request.args.get('code')
-    state = request.args.get('state')
+    code = args.get('code')
+    state = args.get('state')
 
     logger.info(f'get code {code}')
 
