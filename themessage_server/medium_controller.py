@@ -2,31 +2,25 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-import gevent
-from gevent.queue import Queue
+# import gevent
+# from gevent.queue import Queue
 
-from flask import Blueprint, jsonify, request, request_finished, Response
+# from flask import Blueprint, jsonify, request, request_finished, Response
 # TODO:
 # maybe will require fix https://pyjwt.readthedocs.io/en/latest/installation.html#legacy-dependencies
 # because google app engine doesn't allow to compile C
 import jwt
 import os
-from themessage_server import storage
+from themessage_server import blueprint, storage
 
-medium_blueprint = Blueprint('medium', __name__)
+# medium_blueprint = Blueprint('medium', __name__)
+medium_blueprint = blueprint.Blueprint('medium', __name__)
 
 code_subscriptions = []
 
-__app = None
-
-
-def set_app(_app):
-    global __app
-    __app = _app
-
 
 @medium_blueprint.route('/debug')
-def debug():
+def debug(request):
     return f'Currently {len(code_subscriptions)} subscriptions'
 
 
@@ -34,7 +28,7 @@ def debug():
 # https://example.com/callback/medium?state={{state}}&code={{code}}
 # https://example.com/callback/medium?error=access_denied
 @medium_blueprint.route('/callback')
-def medium_callback():
+async def medium_callback(request):
     def log_error(msg, request_payload=None, err=None, code=400):
         request_payload = request_payload or {}
         logging_data = {
@@ -62,9 +56,9 @@ def medium_callback():
             response_data['error'] = str(err)
         if request_payload:
             response_data['payload'] = request_payload
-        return jsonify(response_data), code
+        return response_data, code
 
-    if not request or not request.args:
+    if not request or 'args' not in request:
         return log_error('does not have args')
 
     if 'error' in request.args:
@@ -94,11 +88,11 @@ def medium_callback():
 
     logger.info(f'get code {code} of user {user_id}')
 
-    def notify():
-        for sub in code_subscriptions[:]:
-            sub.put({'code': code, 'state': state, 'user_id': user_id})
-
-    gevent.spawn(notify)
+    # def notify():
+    #     for sub in code_subscriptions[:]:
+    #         sub.put({'code': code, 'state': state, 'user_id': user_id})
+    #
+    # gevent.spawn(notify)
 
     # we could ever this operation move to the client
     # and return code right a way
@@ -133,10 +127,10 @@ def medium_callback():
     #
     # logging.info(f'post is published to {post["url"]}')
 
-    return jsonify({
+    return {
         'status': 'ok',
         'code': code,
-    })
+    }
 
 
 @medium_blueprint.route('/code/<user_id>')
