@@ -6,8 +6,8 @@ storage = {}
 
 
 def store_code(user_id, code):
-    storage[user_id] = code
+    storage[str(user_id)] = code
 
 
 def get_code(user_id):
-    return storage.get(user_id)
+    return storage.get(str(user_id))

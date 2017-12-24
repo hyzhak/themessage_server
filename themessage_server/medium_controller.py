@@ -2,6 +2,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+import aiohttp_sse
+import asyncio
 # TODO:
 # may require fix https://pyjwt.readthedocs.io/en/latest/installation.html#legacy-dependencies
 # because google app engine doesn't allow to compile C
@@ -10,7 +12,7 @@ import os
 from themessage_server import blueprint, storage
 
 from webargs import fields
-from webargs.aiohttpparser import use_args
+from webargs.aiohttpparser import use_args, use_kwargs
 
 medium_blueprint = blueprint.Blueprint('medium', __name__)
 
@@ -87,7 +89,7 @@ async def medium_callback(request, args):
 
     user_id = payload['user_id']
 
-    storage.store_code(state, code)
+    storage.store_code(user_id, code)
 
     logger.info(f'get code {code} of user {user_id}')
 
@@ -136,63 +138,42 @@ async def medium_callback(request, args):
     }
 
 
-@medium_blueprint.get('/code/<user_id>')
-def code_stream(user_id):
-    code_stream_endpoint_name = f'medium.{code_stream.__name__}'
+@medium_blueprint.get('/hello')
+async def hello(request):
+    loop = request.app.loop
+    async with aiohttp_sse.sse_response(request) as resp:
+        for i in range(0, 1000):
+            print('foo')
+            await asyncio.sleep(1, loop=loop)
+            resp.send('foo {}'.format(i), id=i, event=f'event {i}')
 
+    return resp
+
+
+@medium_blueprint.get('/code/{user_id}')
+@use_kwargs({
+    'user_id': fields.Str(location='match_info'),
+})
+async def code_stream(request, user_id):
     logger.info('client start listen its code', extra={
         'user': {
             'id': user_id,
         },
     })
 
-    def gen():
-        q = Queue()
+    loop = request.app.loop
 
-        def on_disconnect(*args, **kwargs):
-            if request.endpoint == code_stream_endpoint_name:
-                logger.info('client disconnects from a stream without getting auth code', extra={
-                    'user': {
-                        'id': user_id,
-                    },
-                })
-                # send None which will be consider as the end
-                q.put(None)
+    code_subscriptions.append(1)
 
-        # start stream
+    async with aiohttp_sse.sse_response(request) as resp:
+        while True:
+            await asyncio.sleep(1, loop=loop)
+            code = storage.get_code(user_id)
+            logger.info(f'have code {code} for {user_id}')
+            if code is not None:
+                resp.send(code)
+                break
 
-        code_subscriptions.append(q)
-        request_finished.connect(on_disconnect, __app)
+    code_subscriptions.pop()
 
-        # stream
-
-        try:
-            while True:
-                result = q.get()
-
-                if result and result['user_id'] == user_id:
-                    yield result['code']
-                    logger.info('client receive auth code', extra={
-                        'user': {
-                            'id': user_id,
-                        },
-                    })
-                    break
-
-                if result is None:
-                    break
-        except GeneratorExit:
-            logger.warning('have problem to send auth code to a client', extra={
-                'user': {
-                    'id': user_id,
-                },
-            })
-
-        # stop stream
-
-        logger.info('before stop stream')
-
-        code_subscriptions.remove(q)
-        request_finished.disconnect(on_disconnect, __app)
-
-    return Response(gen(), mimetype="text/event-stream")
+    return resp
