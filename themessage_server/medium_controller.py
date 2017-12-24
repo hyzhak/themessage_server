@@ -16,12 +16,12 @@ from webargs.aiohttpparser import use_args, use_kwargs
 
 medium_blueprint = blueprint.Blueprint('medium', __name__)
 
-code_subscriptions = []
+subscriptions = []
 
 
 @medium_blueprint.get('/debug')
 def debug(request):
-    return f'Currently {len(code_subscriptions)} subscriptions'
+    return f'Currently {len(subscriptions)} subscriptions'
 
 
 # should be able to handle:
@@ -155,7 +155,7 @@ async def hello(request):
     'user_id': fields.Str(location='match_info'),
 })
 async def code_stream(request, user_id):
-    logger.info('client start listen its code', extra={
+    logger.info(f'client {user_id} started listen its code', extra={
         'user': {
             'id': user_id,
         },
@@ -163,17 +163,33 @@ async def code_stream(request, user_id):
 
     loop = request.app.loop
 
-    code_subscriptions.append(1)
+    subscriptions.append(user_id)
 
-    async with aiohttp_sse.sse_response(request) as resp:
-        while True:
-            await asyncio.sleep(1, loop=loop)
-            code = storage.get_code(user_id)
-            logger.info(f'have code {code} for {user_id}')
-            if code is not None:
-                resp.send(code)
-                break
+    try:
 
-    code_subscriptions.pop()
+        async with aiohttp_sse.sse_response(request) as resp:
+            while True:
+                # TODO: it would be better to create callback/promise
+                # which will be resolved once we would get the code
+                await asyncio.sleep(1, loop=loop)
+                code = storage.get_code(user_id)
+                if code is not None:
+                    logger.info(f'we got code {code} for {user_id}', extra={
+                        'user': {
+                            'id': user_id,
+                        },
+                    })
+                    resp.send(code)
+                    break
+    except asyncio.CancelledError as e:
+        logger.info(f'client {user_id} has cancelled request', extra={
+            'user': {
+                'id': user_id,
+            },
+        })
+        subscriptions.remove(user_id)
+        raise e
+
+    subscriptions.remove(user_id)
 
     return resp
