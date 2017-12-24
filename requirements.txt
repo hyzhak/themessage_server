@@ -1,2 +1,7 @@
-flask==0.12.2
+aiohttp==2.3.6
+aiohttp_sse==1.1.0
 medium==0.3.0
+PyJWT==1.5.3
+pytest==3.3.1
+pytest-aiohttp
+webargs==1.8.1
