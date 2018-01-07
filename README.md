@@ -1,2 +1,2 @@
-# themessage_server
+# themessage_server [![Build Status](https://travis-ci.org/hyzhak/themessage_server.svg?branch=master)](https://travis-ci.org/hyzhak/themessage_server) [![Coverage Status](https://coveralls.io/repos/github/hyzhak/themessage_server/badge.svg?branch=master)](https://coveralls.io/github/hyzhak/themessage_server?branch=master) [![Python 3](https://pyup.io/repos/github/hyzhak/themessage_server/python-3-shield.svg)](https://pyup.io/repos/github/hyzhak/themessage_server/)
 server side of themessage project
