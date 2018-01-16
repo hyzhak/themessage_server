@@ -1,16 +1,9 @@
 {
-  "name": "themessage_server",
-  "description": "proxy server of app themessage",
-  "scripts": {
-  },
-  "env": {
-  },
-  "formation": {
-  },
-  "addons": [
-
-  ],
-  "buildpacks": [
-
-  ]
+  "name": "the-message-server",
+  "description": "proxy server",
+  "scripts": {},
+  "env": {},
+  "formation": {},
+  "addons": [],
+  "buildpacks": []
 }
