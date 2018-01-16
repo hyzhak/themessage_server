@@ -16,7 +16,7 @@ fi
 
 echo 'lets bump to new version and update changelog file'
 
-version=`cat ${DIR}/../version.txt`
+version=`cat ${DIR}/../themessage_server/version.txt`
 versions=`git tag --list`
 
 echo 'current version' ${version}
