@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 
-# bump semver of module
+# * bump semver of module
+# * update changelog
 
 set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -67,8 +68,8 @@ if [[ ${versions} == *${next_version}* ]]; then
    exit 1
 fi
 
-# TODO: update CHANGELOG
-# github_changelog_generator
+# update CHANGELOG
+github_changelog_generator
 
 # don't need to deploy yet
 # ${DIR}/deploy.sh
