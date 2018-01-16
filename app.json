@@ -1,9 +1,0 @@
-{
-  "name": "the-message-server",
-  "description": "proxy server",
-  "scripts": {},
-  "env": {},
-  "formation": {},
-  "addons": [],
-  "buildpacks": []
-}
