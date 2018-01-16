@@ -6,7 +6,14 @@
 set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-echo 'bump to new version and update changelog file'
+TARGET_BRANCH="master"
+CURRENT_BRANCH=`git rev-parse --abbrev-ref HEAD`
+if [[ ${CURRENT_BRANCH} != ${TARGET_BRANCH} ]]; then
+   echo "we should bump module version only in '${TARGET_BRANCH}' branch"
+   exit 1
+fi
+
+echo 'lets bump to new version and update changelog file'
 
 version=`cat ${DIR}/../version.txt`
 versions=`git tag --list`
