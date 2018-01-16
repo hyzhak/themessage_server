@@ -74,7 +74,7 @@ github_changelog_generator
 # don't need to deploy yet
 # ${DIR}/deploy.sh
 
-git commit -am "bump to ${next_version}"
+git commit -am ":rocket: bump to ${next_version}"
 git tag ${next_version}
 git push
 git push --tag
