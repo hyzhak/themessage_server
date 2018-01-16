@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: python ./themessage_server/main.py
+    command: ./bin/start.sh
     volumes:
       - ./:/usr/src/app:rw
     env_file:
