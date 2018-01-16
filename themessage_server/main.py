@@ -23,7 +23,7 @@ def create_app():
 
 
 def main():
-    port_string = os.environ.get('SERVER_PORT', None)
+    port_string = os.environ.get('SERVER_PORT', os.environ.get('PORT', None))
     port = int(port_string) if port_string else None
     app = create_app()
     web.run_app(app,
