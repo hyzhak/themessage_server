@@ -73,17 +73,25 @@ if [[ ${versions} == *${next_version}* ]]; then
    exit 1
 fi
 
+git commit -am ":rocket: bump to ${next_version}"
+git tag ${next_version}
+git push
+git push --tag
+
+
 # update CHANGELOG and skip "patch" version
 if [[ ${target_version} == "patch" ]]; then
     echo "don't update changelog for a patch";
 else
+    echo "start change log generation:"
+
     github_changelog_generator;
+
+    echo "changelog was generated"
+
+    git commit -am ":scroll: changelog to ${next_version}"
+    git push
 fi
 
 # don't need to deploy yet
 # ${DIR}/deploy.sh
-
-#git commit -am ":rocket: bump to ${next_version}"
-#git tag ${next_version}
-#git push
-#git push --tag
