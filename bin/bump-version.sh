@@ -4,6 +4,8 @@
 # * bump semver of module
 # * update changelog
 
+PACKAGE_NAME='themessage_server'
+
 set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT=`realpath "${DIR}/.."`
@@ -15,10 +17,10 @@ if [[ ${CURRENT_BRANCH} != ${TARGET_BRANCH} ]]; then
    exit 1
 fi
 
-echo 'lets bump to new version and update changelog file'
+echo 'lets bump to the new version and update changelog file'
 
 
-PATH_TO_THE_VERSION="${ROOT}/themessage_server/version.txt"
+PATH_TO_THE_VERSION="${ROOT}/${PACKAGE_NAME}/version.txt"
 
 version=`cat ${PATH_TO_THE_VERSION}`
 versions=`git tag --list`
