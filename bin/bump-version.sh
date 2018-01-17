@@ -6,6 +6,7 @@
 
 set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOT=`realpath "${DIR}/.."`
 
 TARGET_BRANCH="master"
 CURRENT_BRANCH=`git rev-parse --abbrev-ref HEAD`
@@ -17,7 +18,7 @@ fi
 echo 'lets bump to new version and update changelog file'
 
 
-PATH_TO_THE_VERSION="${DIR}/../themessage_server/version.txt"
+PATH_TO_THE_VERSION="${ROOT}/themessage_server/version.txt"
 
 version=`cat ${PATH_TO_THE_VERSION}`
 versions=`git tag --list`
