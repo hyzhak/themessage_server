@@ -38,14 +38,13 @@ class Blueprint:
         elif isinstance(body, str):
             return web.Response(body=body, **kwargs)
         elif isinstance(body, tuple):
-            status = 200
-            headers = None
+            params = {}
             for b in body[1:]:
                 if isinstance(b, int):
-                    status = b
+                    params['status'] = b
                 elif isinstance(b, dict):
-                    headers = b
-            new_res = self._parse_response(body[0], status=status, headers=headers)
+                    params['headers'] = b
+            new_res = self._parse_response(body[0], **params)
             return new_res
         else:
             return body
