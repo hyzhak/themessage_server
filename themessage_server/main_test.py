@@ -14,6 +14,4 @@ async def test_every_response_should_have_version_header(test_client):
     client = await test_client(main.create_app())
     resp = await client.get('/')
     assert resp.status == 200
-    assert resp.headers.get('X-VERSION') == '0.0.1'
-    # TODO: should be that way
-    # assert resp.headers.get('X-VERSION') == themessage_server.__version__
+    assert resp.headers.get('X-VERSION') == themessage_server.__version__
