@@ -74,3 +74,23 @@ async def test_response_json():
     assert type(res) == web.Response
     assert res.text == '{"field_1": "value_1", "field_2": "value_2"}'
     assert res.status == 200
+
+
+async def test_response_with_headers():
+    mock_app = MockAioHttpApp()
+    b = Blueprint()
+
+    @b.get('/')
+    def handler(req):
+        return 'body', {
+            'X_HEADER_FIELD_1': 'X_HEADER_VALUE_1',
+            'X_HEADER_FIELD_2': 'X_HEADER_VALUE_2',
+        }
+
+    b.register_app(mock_app)
+
+    res = await mock_app.send_get()
+
+    assert type(res) == web.Response
+    assert res.headers.get('X_HEADER_FIELD_1') == 'X_HEADER_VALUE_1'
+    assert res.headers.get('X_HEADER_FIELD_2') == 'X_HEADER_VALUE_2'

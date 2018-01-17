@@ -32,15 +32,19 @@ class Blueprint:
         # TODO: should receive any method
         return self._route('get', url)
 
-    def _parse_response(self, body):
+    def _parse_response(self, body, **kwargs):
         if isinstance(body, dict):
             return web.json_response(body)
         elif isinstance(body, str):
-            return web.Response(body=body)
+            return web.Response(body=body, **kwargs)
         elif isinstance(body, tuple):
-            new_res = self._parse_response(body[0])
+            status = 200
+            headers = None
             if isinstance(body[1], int):
-                new_res.state = body[1]
+                status = body[1]
+            elif isinstance(body[1], dict):
+                headers = body[1]
+            new_res = self._parse_response(body[0], status=status, headers=headers)
             return new_res
         else:
             return body
