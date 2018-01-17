@@ -40,10 +40,11 @@ class Blueprint:
         elif isinstance(body, tuple):
             status = 200
             headers = None
-            if isinstance(body[1], int):
-                status = body[1]
-            elif isinstance(body[1], dict):
-                headers = body[1]
+            for b in body[1:]:
+                if isinstance(b, int):
+                    status = b
+                elif isinstance(b, dict):
+                    headers = b
             new_res = self._parse_response(body[0], status=status, headers=headers)
             return new_res
         else:

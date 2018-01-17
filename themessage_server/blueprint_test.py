@@ -94,3 +94,24 @@ async def test_response_with_headers():
     assert type(res) == web.Response
     assert res.headers.get('X_HEADER_FIELD_1') == 'X_HEADER_VALUE_1'
     assert res.headers.get('X_HEADER_FIELD_2') == 'X_HEADER_VALUE_2'
+
+
+async def test_response_with_headers():
+    mock_app = MockAioHttpApp()
+    b = Blueprint()
+
+    @b.get('/')
+    def handler(req):
+        return 'body', {
+            'X_HEADER_FIELD_1': 'X_HEADER_VALUE_1',
+            'X_HEADER_FIELD_2': 'X_HEADER_VALUE_2',
+        }, 400
+
+    b.register_app(mock_app)
+
+    res = await mock_app.send_get()
+
+    assert type(res) == web.Response
+    assert res.headers.get('X_HEADER_FIELD_1') == 'X_HEADER_VALUE_1'
+    assert res.headers.get('X_HEADER_FIELD_2') == 'X_HEADER_VALUE_2'
+    assert res.status == 400
