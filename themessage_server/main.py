@@ -11,13 +11,23 @@ main_blueprint = blueprint.Blueprint('main', 'main')
 main_blueprint.register_blueprint(medium_controller.medium_blueprint, url_prefix='/medium')
 
 
+@web.middleware
+async def version_middleware(request, handler):
+    resp = await handler(request)
+    # TODO: should get from themessage_server.__version__
+    resp.headers['X-VERSION'] = '0.0.1'
+    return resp
+
+
 @main_blueprint.get('/')
 def root_router(request):
     return {'status': 'ok'}
 
 
 def create_app():
-    app = web.Application()
+    app = web.Application(middlewares=[
+        version_middleware,
+    ])
     main_blueprint.register_app(app)
     return app
 
