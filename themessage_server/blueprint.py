@@ -32,17 +32,22 @@ class Blueprint:
         # TODO: should receive any method
         return self._route('get', url)
 
-    def _parse_response(self, res):
-        if isinstance(res, dict):
-            return web.json_response(res)
-        elif isinstance(res, str):
-            return web.Response(body=res)
-        elif isinstance(res, tuple):
-            new_res = self._parse_response(res[0])
-            new_res.state = res[1]
+    def _parse_response(self, body, **kwargs):
+        if isinstance(body, dict):
+            return web.json_response(body)
+        elif isinstance(body, str):
+            return web.Response(body=body, **kwargs)
+        elif isinstance(body, tuple):
+            params = {}
+            for b in body[1:]:
+                if isinstance(b, int):
+                    params['status'] = b
+                elif isinstance(b, dict):
+                    params['headers'] = b
+            new_res = self._parse_response(body[0], **params)
             return new_res
         else:
-            return res
+            return body
 
     def _route(self, method, url):
         def wrapper(fn):
