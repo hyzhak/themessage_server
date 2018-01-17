@@ -6,17 +6,10 @@ logger = logging.getLogger('main')
 from aiohttp import web
 import os
 from themessage_server import blueprint, medium_controller
+from themessage_server.version_middleware import version_middleware
 
 main_blueprint = blueprint.Blueprint('main', 'main')
 main_blueprint.register_blueprint(medium_controller.medium_blueprint, url_prefix='/medium')
-
-
-@web.middleware
-async def version_middleware(request, handler):
-    resp = await handler(request)
-    # TODO: should get from themessage_server.__version__
-    resp.headers['X-VERSION'] = '0.0.1'
-    return resp
 
 
 @main_blueprint.get('/')
