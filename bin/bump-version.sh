@@ -23,7 +23,8 @@ PATH_TO_THE_VERSION="${ROOT}/themessage_server/version.txt"
 version=`cat ${PATH_TO_THE_VERSION}`
 versions=`git tag --list`
 
-echo 'current version' ${version}
+echo "grab version file ${PATH_TO_THE_VERSION}"
+echo "current version is ${version}"
 
 #increase patch
 
@@ -40,14 +41,14 @@ case ${target_version} in
     new_major_version=$((major_version + 1))
     new_minor_version=0
     new_patch_version=0
-    echo "major update"
+    echo "applied major update"
     shift
     ;;
     minor)
     new_major_version=${major_version}
     new_minor_version=$((minor_version + 1))
     new_patch_version=0
-    echo "minor update"
+    echo "applied minor update"
     shift
     ;;
     *)
@@ -55,16 +56,16 @@ case ${target_version} in
     new_minor_version=${minor_version}
     new_patch_version=$((patch_version + 1))
     target_version=patch
-    echo "patch"
+    echo "applied patch"
     ;;
 esac
 
 next_version="${new_major_version}.${new_minor_version}.${new_patch_version}"
 
-echo "next version ${next_version}"
+echo "next version is ${next_version}"
 
 echo ${next_version} > ${PATH_TO_THE_VERSION}
-echo "updated ${PATH_TO_THE_VERSION}"
+echo "updated version file"
 
 
 if [[ ${versions} == *${next_version}* ]]; then
@@ -72,13 +73,17 @@ if [[ ${versions} == *${next_version}* ]]; then
    exit 1
 fi
 
-# update CHANGELOG
-github_changelog_generator
+# update CHANGELOG and skip "patch" version
+if [[ ${target_version} == "patch" ]]; then
+    echo "don't update changelog for a patch";
+else
+    github_changelog_generator;
+fi
 
 # don't need to deploy yet
 # ${DIR}/deploy.sh
 
-git commit -am ":rocket: bump to ${next_version}"
-git tag ${next_version}
-git push
-git push --tag
+#git commit -am ":rocket: bump to ${next_version}"
+#git tag ${next_version}
+#git push
+#git push --tag
