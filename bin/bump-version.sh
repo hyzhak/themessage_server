@@ -16,7 +16,10 @@ fi
 
 echo 'lets bump to new version and update changelog file'
 
-version=`cat ${DIR}/../themessage_server/version.txt`
+
+PATH_TO_THE_VERSION="${DIR}/../themessage_server/version.txt"
+
+version=`cat ${PATH_TO_THE_VERSION}`
 versions=`git tag --list`
 
 echo 'current version' ${version}
@@ -59,8 +62,8 @@ next_version="${new_major_version}.${new_minor_version}.${new_patch_version}"
 
 echo "next version ${next_version}"
 
-echo ${next_version} > ${DIR}/../version.txt
-echo 'updated version.txt'
+echo ${next_version} > ${PATH_TO_THE_VERSION}
+echo "updated ${PATH_TO_THE_VERSION}"
 
 
 if [[ ${versions} == *${next_version}* ]]; then
