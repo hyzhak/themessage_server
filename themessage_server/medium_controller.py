@@ -24,9 +24,6 @@ def debug(request):
     return f'Currently {len(subscriptions)} subscriptions'
 
 
-# should be able to handle:
-# https://example.com/callback/medium?state={{state}}&code={{code}}
-# https://example.com/callback/medium?error=access_denied
 @medium_blueprint.get('/callback')
 @use_args({
     'code': fields.Str(),
@@ -34,6 +31,15 @@ def debug(request):
     'state': fields.Str(),
 })
 async def medium_callback(request, args):
+    """
+    should be able to handle:
+    https://example.com/callback/medium?state={{state}}&code={{code}}
+    https://example.com/callback/medium?error=access_denied
+
+    :param request:
+    :param args:
+    :return:
+    """
     def log_error(msg, request_payload=None, err=None, code=400):
         request_payload = request_payload or {}
         logging_data = {
