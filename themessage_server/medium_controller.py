@@ -24,9 +24,6 @@ def debug(request):
     return f'Currently {len(subscriptions)} subscriptions'
 
 
-# should be able to handle:
-# https://example.com/callback/medium?state={{state}}&code={{code}}
-# https://example.com/callback/medium?error=access_denied
 @medium_blueprint.get('/callback')
 @use_args({
     'code': fields.Str(),
@@ -34,6 +31,16 @@ def debug(request):
     'state': fields.Str(),
 })
 async def medium_callback(request, args):
+    """
+    should be able to handle:
+    https://example.com/callback/medium?state={{state}}&code={{code}}
+    https://example.com/callback/medium?error=access_denied
+
+    :param request:
+    :param args:
+    :return:
+    """
+
     def log_error(msg, request_payload=None, err=None, code=400):
         request_payload = request_payload or {}
         logging_data = {
@@ -93,61 +100,10 @@ async def medium_callback(request, args):
 
     logger.info(f'get code {code} of user {user_id}')
 
-    # def notify():
-    #     for sub in code_subscriptions[:]:
-    #         sub.put({'code': code, 'state': state, 'user_id': user_id})
-    #
-    # gevent.spawn(notify)
-
-    # we could ever this operation move to the client
-    # and return code right a way
-    #
-    # try:
-    #     token = medium_integration.authorize(request.args.get('code'))
-    # except medium.MediumError as err:
-    #     logger.error(f'Can not authorize user by code {code}', exc_info=True, extra={
-    #         'data': {
-    #             'request': {
-    #                 'args': request.args,
-    #             },
-    #         },
-    #     })
-    #     abort(400)
-
-    # user = medium_integration.get_user()
-    # logger.info(f'user @{user.get("username")} is authorized')
-    # logger.info(user)
-
-    # send message back to client if it's listening us
-    # or store token locally and return to client once it will come
-
-    # logging.warning('TODO:should store user token!')
-    #
-    # logging.info('temporal scenario - publish article')
-    # with open('examples/article.md') as f:
-    #     article = f.read()
-    #     post = medium_integration.publish(token,
-    #                                       title='Markdown test',
-    #                                       content=article)
-    #
-    # logging.info(f'post is published to {post["url"]}')
-
     return {
         'status': 'ok',
         'code': code,
     }
-
-
-@medium_blueprint.get('/hello')
-async def hello(request):
-    loop = request.app.loop
-    async with aiohttp_sse.sse_response(request) as resp:
-        for i in range(0, 1000):
-            print('foo')
-            await asyncio.sleep(1, loop=loop)
-            resp.send('foo {}'.format(i), id=i, event=f'event {i}')
-
-    return resp
 
 
 @medium_blueprint.get('/code/{user_id}')
