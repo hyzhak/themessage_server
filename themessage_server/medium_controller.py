@@ -99,45 +99,6 @@ async def medium_callback(request, args):
 
     logger.info(f'get code {code} of user {user_id}')
 
-    # def notify():
-    #     for sub in code_subscriptions[:]:
-    #         sub.put({'code': code, 'state': state, 'user_id': user_id})
-    #
-    # gevent.spawn(notify)
-
-    # we could ever this operation move to the client
-    # and return code right a way
-    #
-    # try:
-    #     token = medium_integration.authorize(request.args.get('code'))
-    # except medium.MediumError as err:
-    #     logger.error(f'Can not authorize user by code {code}', exc_info=True, extra={
-    #         'data': {
-    #             'request': {
-    #                 'args': request.args,
-    #             },
-    #         },
-    #     })
-    #     abort(400)
-
-    # user = medium_integration.get_user()
-    # logger.info(f'user @{user.get("username")} is authorized')
-    # logger.info(user)
-
-    # send message back to client if it's listening us
-    # or store token locally and return to client once it will come
-
-    # logging.warning('TODO:should store user token!')
-    #
-    # logging.info('temporal scenario - publish article')
-    # with open('examples/article.md') as f:
-    #     article = f.read()
-    #     post = medium_integration.publish(token,
-    #                                       title='Markdown test',
-    #                                       content=article)
-    #
-    # logging.info(f'post is published to {post["url"]}')
-
     return {
         'status': 'ok',
         'code': code,
