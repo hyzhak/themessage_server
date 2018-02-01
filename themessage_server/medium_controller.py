@@ -40,6 +40,7 @@ async def medium_callback(request, args):
     :param args:
     :return:
     """
+
     def log_error(msg, request_payload=None, err=None, code=400):
         request_payload = request_payload or {}
         logging_data = {
@@ -103,18 +104,6 @@ async def medium_callback(request, args):
         'status': 'ok',
         'code': code,
     }
-
-
-@medium_blueprint.get('/hello')
-async def hello(request):
-    loop = request.app.loop
-    async with aiohttp_sse.sse_response(request) as resp:
-        for i in range(0, 1000):
-            print('foo')
-            await asyncio.sleep(1, loop=loop)
-            resp.send('foo {}'.format(i), id=i, event=f'event {i}')
-
-    return resp
 
 
 @medium_blueprint.get('/code/{user_id}')
