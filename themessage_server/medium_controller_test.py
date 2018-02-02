@@ -27,6 +27,14 @@ def client_get(app, test_client):
     return make_get
 
 
+async def test_medium_auth(client_get):
+    resp = await client_get(f'{url_prefix}/auth')
+    assert resp.status == 200
+    j = await resp.json()
+    assert len(j.get('url')) > 0
+    assert len(j.get('user_id')) > 0
+
+
 async def test_medium_debug(client_get):
     resp = await client_get(f'{url_prefix}/debug')
     assert resp.status == 200

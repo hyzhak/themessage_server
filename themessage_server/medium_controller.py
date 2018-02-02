@@ -9,14 +9,26 @@ import asyncio
 # because google app engine doesn't allow to compile C
 import jwt
 import os
-from themessage_server import blueprint, storage
-
+import uuid
 from webargs import fields
 from webargs.aiohttpparser import use_args, use_kwargs
+
+from themessage_server import blueprint, medium, storage
+from themessage_server.medium import auth as medium_auth
 
 medium_blueprint = blueprint.Blueprint('medium', __name__)
 
 subscriptions = []
+
+
+@medium_blueprint.get('/auth')
+def auth(request):
+    user_id = str(uuid.uuid1())
+    url = medium_auth.get_auth_url(user_id)
+    return {
+        'url': url,
+        'user_id': user_id,
+    }
 
 
 @medium_blueprint.get('/debug')
