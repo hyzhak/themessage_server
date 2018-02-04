@@ -33,6 +33,7 @@ async def test_medium_auth(client_get):
     j = await resp.json()
     assert len(j.get('url')) > 0
     assert len(j.get('user_id')) > 0
+    assert len(j.get('secret')) > 0
 
 
 async def test_medium_debug(client_get):

@@ -24,10 +24,12 @@ subscriptions = []
 @medium_blueprint.get('/auth')
 def auth(request):
     user_id = str(uuid.uuid1())
-    url = medium_auth.get_auth_url(user_id)
+    secret = str(uuid.uuid1())
+    url = medium_auth.get_auth_url(f'{user_id}_{secret}')
     return {
         'url': url,
         'user_id': user_id,
+        'secret': secret,
     }
 
 
