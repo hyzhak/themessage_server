@@ -108,9 +108,9 @@ async def medium_callback(request, args):
     #                      })
     # user_id = payload['user_id']
     # storage.store_code(user_id, code)
-
+    token = medium_auth.get_token(code)
     user_id = args.get('state')
-    storage.store_code(user_id, code)
+    storage.store_token(user_id, token)
 
     logger.info(f'get code {code} of user {user_id}')
 
@@ -120,7 +120,7 @@ async def medium_callback(request, args):
     }
 
 
-@medium_blueprint.get('/code/{user_id}')
+@medium_blueprint.get('/token/{user_id}')
 @use_kwargs({
     'user_id': fields.Str(location='match_info'),
 })
@@ -142,14 +142,14 @@ async def code_stream(request, user_id):
                 # TODO: it would be better to create callback/promise
                 # which will be resolved once we would get the code
                 await asyncio.sleep(1, loop=loop)
-                code = storage.get_code(user_id)
-                if code is not None:
-                    logger.info(f'we got code {code} for {user_id}', extra={
+                token = storage.get_token(user_id)
+                if token is not None:
+                    logger.info(f'we got token {token} for {user_id}', extra={
                         'user': {
                             'id': user_id,
                         },
                     })
-                    resp.send(code)
+                    resp.send(token)
                     break
     except asyncio.CancelledError as e:
         logger.info(f'client {user_id} has cancelled request', extra={
