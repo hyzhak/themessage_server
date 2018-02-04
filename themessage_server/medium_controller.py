@@ -98,7 +98,7 @@ async def medium_callback(request, args):
     logger.info(f'user {user_id} gets code {code}')
 
     token = medium_auth.get_token(code)
-    encoded_token = str(jwt.encode({'token': token}, secret, algorithm='HS256'))
+    encoded_token = str(jwt.encode({'token': token, 'user_id': user_id}, secret, algorithm='HS256'))
 
     logger.info(f'user {user_id} gets encoded token {encoded_token}')
     storage.store_token(user_id, encoded_token)

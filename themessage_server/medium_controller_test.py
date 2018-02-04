@@ -65,7 +65,7 @@ async def test_code_stream_receives_callback_code(app, client_get, user_state):
     user_state = f'{user_id}_{secret}'
     mock_code = '1'
     mock_token = 'one_token'
-    mock_token_encoded = jwt.encode({'token': mock_token}, secret, algorithm='HS256')
+    mock_token_encoded = jwt.encode({'token': mock_token, 'user_id': user_id}, secret, algorithm='HS256')
 
     async def get_code():
         resp = await client_get(
