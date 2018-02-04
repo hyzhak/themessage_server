@@ -92,22 +92,22 @@ async def medium_callback(request, args):
         return log_error('get medium callback without state or code')
 
     code = args.get('code')
-    state = args.get('state')
-
     logger.info(f'get code {code}')
 
-    try:
-        payload = jwt.decode(state, os.environ.get('JWT_SECRET'), algorithms=['HS256'])
-    except jwt.DecodeError as err:
-        return log_error('get callback request with broken state argument',
-                         err=err,
-                         request_payload={
-                             'code': code,
-                             'state': state,
-                         })
+    # state = args.get('state')
+    # try:
+    #     payload = jwt.decode(state, os.environ.get('JWT_SECRET'), algorithms=['HS256'])
+    # except jwt.DecodeError as err:
+    #     return log_error('get callback request with broken state argument',
+    #                      err=err,
+    #                      request_payload={
+    #                          'code': code,
+    #                          'state': state,
+    #                      })
+    # user_id = payload['user_id']
+    # storage.store_code(user_id, code)
 
-    user_id = payload['user_id']
-
+    user_id = args.get('state')
     storage.store_code(user_id, code)
 
     logger.info(f'get code {code} of user {user_id}')

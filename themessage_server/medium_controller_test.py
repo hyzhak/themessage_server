@@ -62,7 +62,7 @@ async def test_code_stream_receives_callback_code(app, client_get, user_state):
         # /callback should shoot later than /code/1
         await asyncio.sleep(.1)
         resp = await client_get(
-            f'{url_prefix}/callback?code=1&state={user_state}',
+            f'{url_prefix}/callback?code=1&state=1',
             app,
         )
         assert resp.status == 200
