@@ -1,4 +1,4 @@
-from themessage_server.medium import auth as medium_auth
+from themessage_server.medium_middleware import auth as medium_auth
 
 
 def test_get_auth_url():

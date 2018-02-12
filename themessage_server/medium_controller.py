@@ -4,17 +4,19 @@ logger = logging.getLogger(__name__)
 
 import aiohttp_sse
 import asyncio
+import base64
 # TODO:
 # may require fix https://pyjwt.readthedocs.io/en/latest/installation.html#legacy-dependencies
 # because google app engine doesn't allow to compile C
 import jwt
 import os
+import random
 import uuid
 from webargs import fields
 from webargs.aiohttpparser import use_args, use_kwargs
 
-from themessage_server import blueprint, medium, storage
-from themessage_server.medium import auth as medium_auth
+from themessage_server import blueprint, storage
+from themessage_server.medium_middleware import auth as medium_auth
 
 medium_blueprint = blueprint.Blueprint('medium', __name__)
 
@@ -23,8 +25,8 @@ subscriptions = []
 
 @medium_blueprint.get('/auth')
 def auth(request):
-    user_id = str(uuid.uuid1())
-    secret = str(uuid.uuid1())
+    user_id = base64.b64encode(uuid.uuid1().bytes[:-1]).decode('ascii')
+    secret = base64.b64encode(bytes(random.choices(range(0xff), k=12))).decode('ascii')
     url = medium_auth.get_auth_url(f'{user_id}_{secret}')
     return {
         'url': url,

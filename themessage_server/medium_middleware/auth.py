@@ -2,12 +2,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+import jwt
+import medium
 import os
 import requests
 import uuid
-
-import jwt
-import medium
 
 # Go to http://medium.com/me/applications to get your application_id and application_secret.
 medium_client = medium.Client(application_id=os.environ.get('MEDIUM_APP_ID'),
