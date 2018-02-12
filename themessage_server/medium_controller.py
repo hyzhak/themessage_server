@@ -4,19 +4,35 @@ logger = logging.getLogger(__name__)
 
 import aiohttp_sse
 import asyncio
+import base64
 # TODO:
 # may require fix https://pyjwt.readthedocs.io/en/latest/installation.html#legacy-dependencies
 # because google app engine doesn't allow to compile C
 import jwt
 import os
-from themessage_server import blueprint, storage
-
+import random
+import uuid
 from webargs import fields
 from webargs.aiohttpparser import use_args, use_kwargs
+
+from themessage_server import blueprint, storage
+from themessage_server.medium_middleware import auth as medium_auth
 
 medium_blueprint = blueprint.Blueprint('medium', __name__)
 
 subscriptions = []
+
+
+@medium_blueprint.get('/auth')
+def auth(request):
+    user_id = base64.b64encode(uuid.uuid1().bytes[:-1]).decode('ascii')
+    secret = base64.b64encode(bytes(random.choices(range(0xff), k=12))).decode('ascii')
+    url = medium_auth.get_auth_url(f'{user_id}_{secret}')
+    return {
+        'url': url,
+        'user_id': user_id,
+        'secret': secret,
+    }
 
 
 @medium_blueprint.get('/debug')
@@ -80,25 +96,14 @@ async def medium_callback(request, args):
         return log_error('get medium callback without state or code')
 
     code = args.get('code')
-    state = args.get('state')
+    user_id, secret = args.get('state').split('_')
+    logger.info(f'user {user_id} gets code {code}')
 
-    logger.info(f'get code {code}')
+    token = medium_auth.get_token(code)
+    encoded_token = str(jwt.encode({'token': token, 'user_id': user_id}, secret, algorithm='HS256'))
 
-    try:
-        payload = jwt.decode(state, os.environ.get('JWT_SECRET'), algorithms=['HS256'])
-    except jwt.DecodeError as err:
-        return log_error('get callback request with broken state argument',
-                         err=err,
-                         request_payload={
-                             'code': code,
-                             'state': state,
-                         })
-
-    user_id = payload['user_id']
-
-    storage.store_code(user_id, code)
-
-    logger.info(f'get code {code} of user {user_id}')
+    logger.info(f'user {user_id} gets encoded token {encoded_token}')
+    storage.store_token(user_id, encoded_token)
 
     return {
         'status': 'ok',
@@ -106,7 +111,7 @@ async def medium_callback(request, args):
     }
 
 
-@medium_blueprint.get('/code/{user_id}')
+@medium_blueprint.get('/token/{user_id}')
 @use_kwargs({
     'user_id': fields.Str(location='match_info'),
 })
@@ -128,14 +133,14 @@ async def code_stream(request, user_id):
                 # TODO: it would be better to create callback/promise
                 # which will be resolved once we would get the code
                 await asyncio.sleep(1, loop=loop)
-                code = storage.get_code(user_id)
-                if code is not None:
-                    logger.info(f'we got code {code} for {user_id}', extra={
+                token = storage.get_token(user_id)
+                if token is not None:
+                    logger.info(f'we got token {token} for {user_id}', extra={
                         'user': {
                             'id': user_id,
                         },
                     })
-                    resp.send(code)
+                    resp.send(token)
                     break
     except asyncio.CancelledError as e:
         logger.info(f'client {user_id} has cancelled request', extra={

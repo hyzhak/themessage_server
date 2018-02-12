@@ -2,7 +2,8 @@ import asyncio
 import jwt
 import os
 import pytest
-from themessage_server import main
+from themessage_server import main, medium_controller
+from unittest import mock
 
 url_prefix = '/medium'
 
@@ -27,6 +28,15 @@ def client_get(app, test_client):
     return make_get
 
 
+async def test_medium_auth(client_get):
+    resp = await client_get(f'{url_prefix}/auth')
+    assert resp.status == 200
+    j = await resp.json()
+    assert len(j.get('url')) > 0
+    assert len(j.get('user_id')) > 0
+    assert len(j.get('secret')) > 0
+
+
 async def test_medium_debug(client_get):
     resp = await client_get(f'{url_prefix}/debug')
     assert resp.status == 200
@@ -35,30 +45,47 @@ async def test_medium_debug(client_get):
 
 
 async def test_callback_should_validate_state_and_return_passed_code(client_get, monkeypatch, user_state):
-    resp = await client_get(f'{url_prefix}/callback?code=1&state={user_state}')
+    secret = 'secret'
+    user_id = 'user'
+    user_state = f'{user_id}_{secret}'
+    mock_code = '1'
+
+    with mock.patch.object(medium_controller.medium_auth, 'get_token') as get_token:
+        get_token.return_value = 'one_token'
+        resp = await client_get(f'{url_prefix}/callback?code={mock_code}&state={user_state}')
+        get_token.assert_called_with(mock_code)
     assert resp.status == 200
-    assert await resp.json() == {'status': 'ok', 'code': '1'}
+    assert await resp.json() == {'status': 'ok', 'code': mock_code}
 
 
 @pytest.mark.timeout(2000)
 async def test_code_stream_receives_callback_code(app, client_get, user_state):
+    secret = 'secret'
+    user_id = 'user'
+    user_state = f'{user_id}_{secret}'
+    mock_code = '1'
+    mock_token = 'one_token'
+    mock_token_encoded = jwt.encode({'token': mock_token, 'user_id': user_id}, secret, algorithm='HS256')
+
     async def get_code():
         resp = await client_get(
-            f'{url_prefix}/code/1',
+            f'{url_prefix}/token/{user_id}',
             app,
         )
         assert resp.status == 200
-        assert 'data: 1' in await resp.text()
+        assert f'data: {mock_token_encoded}' in await resp.text()
 
     async def set_callback():
-        # /callback should shoot later than /code/1
+        # /callback should shoot later than /token/1
         await asyncio.sleep(.1)
-        resp = await client_get(
-            f'{url_prefix}/callback?code=1&state={user_state}',
-            app,
-        )
+        with mock.patch.object(medium_controller.medium_auth, 'get_token') as get_token:
+            get_token.return_value = mock_token
+            resp = await client_get(
+                f'{url_prefix}/callback?code={mock_code}&state={user_state}',
+                app,
+            )
         assert resp.status == 200
-        assert await resp.json() == {'status': 'ok', 'code': '1'}
+        assert await resp.json() == {'status': 'ok', 'code': mock_code}
 
     res = await asyncio.gather(
         get_code(),
