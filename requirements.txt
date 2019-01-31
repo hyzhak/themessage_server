@@ -5,4 +5,4 @@ PyJWT==1.5.3
 pytest==3.4.0
 pytest-aiohttp==0.3.0
 pytest-cov==2.5.1
-webargs==2.0.0
+webargs==5.1.1.post0
