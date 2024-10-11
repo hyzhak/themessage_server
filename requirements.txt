@@ -1,4 +1,4 @@
-aiohttp==2.3.10
+aiohttp==3.10.10
 aiohttp_sse==1.1.0
 medium==0.3.0
 PyJWT==1.5.3
